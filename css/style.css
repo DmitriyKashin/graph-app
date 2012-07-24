@@ -1,0 +1,11 @@
+.visible {
+	display: block;
+}
+
+.not-visible {
+	display: none;
+}
+
+ul li {
+	display:inline;
+}

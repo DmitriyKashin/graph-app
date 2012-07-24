@@ -1,0 +1,86 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1">
+
+  <title></title>
+  <meta name="description" content="">
+  <meta name="author" content="">
+
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  
+ 
+  <link rel="stylesheet" href="css/style.css">
+  <link rel="stylesheet" href="css/bootstrap.css">
+  
+
+</head>
+
+<body>
+
+
+  <ul class="graphics-list"></ul>
+  
+  <div class="add-graphics"></div>
+
+  
+  
+  <div class="edit-graphics"></div>
+
+  <div id="Editor" style="float:left; margin-left:100px;">
+  <img src="css/img/plus-button.png" style="width:100px;height:100px;margin-top:100px;margin-left:40px;"> </img>
+  </div>
+  
+  <!-- Templates -->
+  
+  
+<script type="text/template" id="graphic-add">
+
+	
+<div id="panel" style="display:none; border:3px solid black; margin-left:-100px; width:400px;height:400px; position:absolute;background-image: url('css/img/armored.jpg'); z-index:10;">
+<img src="css/img/close-button.png" id="panel_close" style="width:60px; height:60px; position:absolute; margin-left:360px;margin-top:-20px; z-index:5;"> </img>
+  
+  <div style=" margin:auto;width:200px;height:200px; margin-top:20%;">
+   <b style="color:white;">Укажите тип оси Х </b> 
+   <br/>  <br/> 
+
+        <select id="x_set" style="">
+        <option value="price">Цена</option>
+        <option value="class">Класс  рейса</option>
+        <option value="days_to_fly">Количество дней до рейса</option>
+        <option value="time_of_fly">Время вылета</option>
+        <option value="day_of_week">День недели</option>
+        </select>
+        <br/><br/>
+
+  <b style="color:white;">Укажите тип оси Y </b> <br/><br/>
+
+        <select id="y_set">
+        <option value="price">Цена</option>
+        <option value="class">Класс  рейса</option>
+        <option value="days_to_fly">Количество дней до рейса</option>
+        <option value="time_of_fly">Время вылета</option>
+        <option value="day_of_week">День недели</option>
+        </select>
+        <br/><br/>
+	<p><input type="button" id="add-button" value="Добавить"/></p>
+  </div></div>
+  </script>
+
+
+  <script type="text/template" id="graphic-edit">
+	<p>X : <input type="text" id="efname" value="<%= x_type %>"/></p>
+	<p>Y : <input type="text" id="elname" value="<%= y_type %>"/></p>
+	<p><input type="button" id="edit-button" value="change"/></p>
+  </script>
+
+	<script src="js/jquery-1.7.2.min.js"></script>
+  <script src="js/underscore.js"></script>
+  <script src="js/backbone.js"></script>
+  <script src="http://people.iola.dk/olau/flot/jquery.flot.js"></script>
+  <script src="js/coffee_client.js"></script>
+
+</body>
+</html>

@@ -3,15 +3,16 @@ _ = require("underscore")
 fs = require("fs")
 connect= require("connect")
 seq = 2              # Количество объектов, которые сервер отсылает изначально (graphicServer)
+clock_set_int = []   # Время : 00-04  - 0 , 04-08 -1, 08-12  - 2, 12-16  -3 , 16-20 -4, 20-24 -5 
 prices_set_int = []  # Цены
 classes_set_int = [] # Классы 0-E, 1-B, 2-W
 days_set_int = [] 
-days_to_fly_set =[]   # 0-Sun, 1-Mon, 2-Tue, 3-Wen, 4-Thu, 5- Fri, 6-Sat
+days_to_fly_set =[]  # 0-Sun, 1-Mon, 2-Tue, 3-Wen, 4-Thu, 5- Fri, 6-Sat
 row_count = 0        # Количество записей в нашем XML
 data_x = []          # Элементы  создания  dataSet  для рисовки посредством jFlot
 data_y = []          #
-users_session = []   # двумерный массив вида [user_id, sessionID]
-userID=0             # Счетчик пользователей
+users_session = {}   # двумерный массив вида [user_id, sessionID]
+userID=1             # Счетчик пользователей
 charge=1             # Заглушка на первую сессию (При втором обновлении окна после действий пользователя sessionID меняется)
 current_user = null  # Текущий пользователь
 OldSession = null    # sessionID предыдущего запроса
@@ -19,41 +20,7 @@ OldSession = null    # sessionID предыдущего запроса
 
 i=0
 
-session_graphicServer = [ [            # Инициализируем 3 объекта сессий для их проверки. ( метод push не работает для undefined)
-    id: 1
-    dataSet: [ [ 0, 1870 ], [ 0, 1400 ], [ 1, 1300 ], [ 4, 1500 ] ]
-    x_type: "price"
-    y_type: "class"
-  ,
-    id: 2
-    dataSet: [ [ 0, 1500 ], [ 0, 1200 ], [ 1, 1200 ], [ 2, 1000 ] ]
-    x_type: "price"
-    y_type: "class"
-  ] 
-,
-  [
-    id: 1
-    dataSet: [ [ 0, 1870 ], [ 0, 1400 ], [ 1, 1300 ], [ 4, 1500 ] ]
-    x_type: "price"
-    y_type: "class"
-  ,
-    id: 2
-    dataSet: [ [ 0, 1500 ], [ 0, 1200 ], [ 1, 1200 ], [ 2, 1000 ] ]
-    x_type: "price"
-    y_type: "class"
-  ]
-  [
-    id: 1
-    dataSet: [ [ 0, 1870 ], [ 0, 1400 ], [ 1, 1300 ], [ 4, 1500 ] ]
-    x_type: "price"
-    y_type: "class"
-  ,
-    id: 2
-    dataSet: [ [ 0, 1500 ], [ 0, 1200 ], [ 1, 1200 ], [ 2, 1000 ] ]
-    x_type: "price"
-    y_type: "class"
-  ]
-]
+session_graphicServer = []
 
 
 
@@ -98,33 +65,26 @@ app.get "/graphics", (req, res) ->
   
   
 
-  user_find = _.find(users_session, (user_exist) -> # Находим  пользователя, сравнивая все предыдущие sessionID с текущим, чтобы не допустить создания нового 'пользователя'
-           
-          if user_exist[1].toString() is req.sessionID.toString() then return user_exist[0]
-  )
+  user_id = users_session[req.sessionID]
   
+
+  if user_id? 
+
+      console.log 'The user has returned : ' + user_id
+   
+      
+  else
+      users_session[req.sessionID]=userID
+      
+      console.log 'New user here : ' + userID
+      userID++
+      user_id = userID
+ 
   charge++
 
-
-
-  if OldSession isnt req.sessionID and user_find is undefined  # Если такой пользователь не найден и session.id предыдущего и текущего запроса различаются, создаем новую сессию
-
-   
+ 
+  current_user = user_id
     
-    users_session.push([userID,req.sessionID])
-    OldSession = req.sessionID
-    userID++
-    console.log 'Новая сессия начата'
-    
-    
-
-  
-  user_find_2 = _.find(users_session, (user_exist) -> #Получаем текущего пользователя
-           
-          if user_exist[1].toString() is req.sessionID.toString() then current_user = parseInt(user_exist[0])
-          
-           
-  )   
  
   if charge is 2 then current_user = 1  # Заглушка на первую загрузку
  
@@ -134,30 +94,55 @@ app.get "/graphics", (req, res) ->
 
 app.get "/graphics/:id", (req, res) ->
 
-  user_find_2 = _.find(users_session, (user_exist) ->
-           
-          if user_exist[1].toString() is req.sessionID.toString() then current_user = parseInt(user_exist[0])
-          
-           
-  )
+  user_id = users_session[req.sessionID]
+  
+
+  if user_id? 
+
+      console.log(' This user has returned : ') + user_id
+   
+      
+  else
+      users_session[req.sessionID]=userID
+      
+      console.log 'New user here : ' + userID
+      
+      user_id = userID
+      userID++
+
+  current_user = user_id
+
+  graphic_rep = null
 
   console.log "get graphic: " + req.params.id
-  graphic = _.find(session_graphicServer[current_user], (p) ->
-    p.id is req.params.id
-  )
- 
 
+  graphic = _.find session_graphicServer[current_user], (p) ->
+    if parseInt(p.id) is parseInt(req.params.id) then  graphic_rep=p
+  
+  console.log graphic_rep
+  
 
-  res.send (graphicServer)
+  res.send graphic_rep
 
 app.delete "/graphics/:id", (req, res) ->
 
-  user_find_2 = _.find(users_session, (user_exist) ->
-           
-          if user_exist[1].toString() is req.sessionID.toString() then current_user = parseInt(user_exist[0])
-          
-           
-  ) 
+  user_id = users_session[req.sessionID]
+  
+
+  if user_id? 
+
+      console.log 'This user has returned : ' + user_id
+   
+      
+  else
+      users_session[req.sessionID]=userID
+      
+      console.log 'New user here : ' + userID
+      
+      user_id = userID
+      userID++
+
+  current_user = user_id
 
   
   console.log "delete graphic: " + req.params.id
@@ -184,16 +169,26 @@ app.delete "/graphics/:id", (req, res) ->
 
 app.post "/graphics", (req, res) ->
 
-  user_find_2 = _.find(users_session, (user_exist) ->
-           
-          if user_exist[1].toString() is req.sessionID.toString() then current_user = parseInt(user_exist[0])
-          
-           
-  ) 
+
+  user_id = users_session[req.sessionID]
   
- 
-  
-  console.log "> new graphic: " + JSON.stringify(req.body) + "for user" + current_user
+
+  if user_id? 
+
+      console.log 'This user has returned : '+ user_id
+   
+      
+  else
+      users_session[req.sessionID]=userID
+      
+      console.log 'New user here : ' + userID
+      
+      user_id = userID
+      userID++
+
+  current_user = user_id
+
+  console.log "new graphic:  " + JSON.stringify(req.body) + "for user" + current_user
   graphic = req.body
   graphic.dataSet=[]
   getNextId = ->
@@ -203,14 +198,14 @@ app.post "/graphics", (req, res) ->
     when "price" then data_x = prices_set_int
     when "class" then data_x = classes_set_int
     when "days_to_fly" then data_x = days_to_fly_set
-    when "time_of_fly" then data_x = classes_set_int
+    when "time_of_fly" then data_x = clock_set_int
     when "day_of_week" then data_x = days_set_int 
   
   switch graphic.y_type
     when "price" then data_y = prices_set_int
     when "class" then data_y = classes_set_int
     when "days_to_fly" then data_y = days_to_fly_set
-    when "time_of_fly" then data_y = classes_set_int
+    when "time_of_fly" then data_y = clock_set_int
     when "day_of_week" then data_y = days_set_int  
   i = 0
   
@@ -221,22 +216,45 @@ app.post "/graphics", (req, res) ->
 
   
   
-
+  
   graphic.id = getNextId()
   
-  session_graphicServer[current_user].push(graphic)
+
+  if session_graphicServer[current_user]?
+    
+    session_graphicServer[current_user].push(graphic)
+   
+  else
+
+   session_graphicServer[current_user] = [graphic]
+
+  
+
+  
+  
   
   res.send session_graphicServer[current_user]
 
 app.put "/graphics/:id", (req, res) ->
 
 
-  user_find_2 = _.find(users_session, (user_exist) ->
-           
-          if user_exist[1].toString() is req.sessionID.toString() then current_user = parseInt(user_exist[0])
-          
-           
-  ) 
+  user_id = users_session[req.sessionID]
+  
+
+  if user_id? 
+
+      console.log 'This user has returned : ' + user_id
+   
+      
+  else
+      users_session[req.sessionID]=userID
+      
+      console.log 'New user here : ' + userID
+      
+      user_id = userID
+      userID++
+
+  current_user = user_id 
 
 
   console.log "change graphic  : " + JSON.stringify(req.body)
@@ -248,14 +266,14 @@ app.put "/graphics/:id", (req, res) ->
     when "price" then data_x = prices_set_int
     when "class" then data_x = classes_set_int
     when "days_to_fly" then data_x = days_to_fly_set
-    when "time_of_fly" then data_x = classes_set_int
+    when "time_of_fly" then data_x = clock_set_int
     when "day_of_week" then data_x = days_set_int 
 
   switch req.body.y_type
     when "price" then data_y = prices_set_int
     when "class" then data_y = classes_set_int
     when "days_to_fly" then data_y = days_to_fly_set
-    when "time_of_fly" then data_y = classes_set_int
+    when "time_of_fly" then data_y = clock_set_int
     when "day_of_week" then data_y = days_set_int 
 
   for obj in session_graphicServer[current_user]
@@ -301,7 +319,9 @@ fs.readFile __dirname + '/flystat_main.xml', (err, data) ->
     trans_company_set = (muppet.trans_company for muppet in result.DATA.ROW)
    
     count=0
-
+    clock = parseInt(date_dep_set[50].toString()[11]+date_dep_set[50].toString()[12])
+    
+    
     for obj in classes_set 
      classes_set_int[count]=0 if obj.toString() is 'E' 
      classes_set_int[count]=1 if obj.toString() is 'B'
@@ -327,6 +347,13 @@ fs.readFile __dirname + '/flystat_main.xml', (err, data) ->
       days_set_int[count]=4 if current_day is "THU"
       days_set_int[count]=5 if current_day is "FRI"
       days_set_int[count]=6 if current_day is "SAT"
+      time_hour = parseInt(date_dep_set[count].toString()[11]+date_dep_set[count].toString()[12])
+      clock_set_int[count] = 0 if time_hour>=0 and   time_hour<4
+      clock_set_int[count] = 1 if time_hour>=4 and   time_hour<8
+      clock_set_int[count] = 2 if time_hour>=8 and   time_hour<12
+      clock_set_int[count] = 3 if time_hour>=12 and   time_hour<16
+      clock_set_int[count] = 4 if time_hour>=16 and   time_hour<20
+      clock_set_int[count] = 5 if time_hour>=20 and   time_hour<24    
       count++
     count=0
     
